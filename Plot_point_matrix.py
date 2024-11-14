@@ -13,44 +13,43 @@ import pandas as pd
 import csv
 
 
-csv_file = 'point_matrix.csv'
+csv_file = 'Data/point_matrix.csv'
 #point_matrix = []
 
-csv = pd.read_csv(csv_file, sep=' ')
-
-#print(csv)
-
-print(csv[1,:])
-
-#csvfile = list(csv.reader(open(csv_file)))
-
-#print (csvfile)
+points_dataframe = pd.read_table(csv_file, sep=' ')
 
 
-#with open(csv_file, newline='') as csvfile:
-#    file_reader = csv.reader(csvfile, delimiter=' ')
-#    row_data = {}
-#    for row in xrange():
-#        point_matrix.append(row)        
-
-#print(point_matrix)
+points = pd.DataFrame(points_dataframe).to_numpy()
 
 
+np.sort(points[:,2])
 
-#with open(csv_file, newline='') as f:
-#    reader = csv.reader(f)
-#    w = []
-#    for row in reader:
-#        w.extend(row)
+idx= find(points[:,1]==5)
 
-#print (w)
+idx
 
-#csvfile = list(csv.reader(open('data.csv')))
+#print(points[1:3,:])
 
-#csvdics = []
 
-#for row in csvfile:
-#    row_dict = {}
-#    for i in xrange(len(row)):
-#        row_dict['column_%s' % i] = row[i]
-#    csvdics.append(row_dict)
+#people.name  #  all the names
+#people.loc[0:2] # first two rows
+
+
+
+
+
+
+
+# with open(csv_file) as file:
+#    lines = file.read()
+
+# print(len(lines))
+
+
+# for cnt in range(1:len(lines)):
+#     print (str(lines[i,:]))
+
+
+
+
+#print(lines)
