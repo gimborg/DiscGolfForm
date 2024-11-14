@@ -41,7 +41,7 @@ from IPython.display import YouTubeVideo, display, Image
 
 # URL = r"https://www.dropbox.com/s/089r2yg6aao858l/opencv_bootcamp_assets_NB14.zip?dl=1"
 
-source = 'Data/Captured_3rd_pose.mp4'  # source is the captured video from file
+source = 'Data/test.mp4'  # source is the captured video from file
 cap = cv2.VideoCapture(source)
 if not cap.isOpened():
     print("Error opening video stream or file")
@@ -57,7 +57,7 @@ frame_height = int(cap.get(4))
 print ("Frame width: " + str(frame_width) + " Frame height: " + str(frame_height))
 
 #out_heatmap = cv2.VideoWriter("Pics_vids/Heat_map_3rd.mp4", cv2.VideoWriter_fourcc(*"XVID"), 10, (frame_width, frame_height))
-out_pose    = cv2.VideoWriter("Data/Pose_3rd.mp4", cv2.VideoWriter_fourcc(*"XVID"), 10, (frame_width, frame_height))
+out_pose    = cv2.VideoWriter("Data/test.mp4", cv2.VideoWriter_fourcc(*"XVID"), 30, (frame_width, frame_height))
 
 
 
@@ -65,10 +65,10 @@ out_pose    = cv2.VideoWriter("Data/Pose_3rd.mp4", cv2.VideoWriter_fourcc(*"XVID
 #First shoulders and hips unsynced 154:250
 #Second shoulders and hips synced 297:381
 
-Frm_start_1 = 154
-Frm_stop_1  = 250
-Frm_start_2 = 297
-Frm_stop_2  = 381
+#Frm_start_1 = 154
+#Frm_stop_1  = 250
+#Frm_start_2 = 297
+#Frm_stop_2  = 381
 
 
 # asset_zip_path = os.path.join(os.getcwd(), f"opencv_bootcamp_assets_NB14.zip")
@@ -109,114 +109,119 @@ point_matrix = np.zeros((length*15,4))
 
 print(point_matrix)
 
-for frm in range(1,length):
-#for frm in range(1,3):
+#for frm in range(1,length):
+for frm in range(1,3):
     print("Frame number: " + str(frm))
-    ret, frame_BGR = cap.read()
+    ret, frame = cap.read()
     
-    if (frm > Frm_start_1 and frm < Frm_stop_1) or (frm > Frm_start_2 and frm < Frm_stop_2):
+    #if (frm > Frm_start_1 and frm < Frm_stop_1) or (frm > Frm_start_2 and frm < Frm_stop_2):
     
     
     
-        frame = cv2.cvtColor(frame_BGR, cv2.COLOR_BGR2RGB)
+    #frame = cv2.cvtColor(frame_BGR, cv2.COLOR_BGR2RGB)
+
+
+    inWidth = frame_width
+    inHeight = frame_height
+
+
+#    inWidth  = frame.shape[1]
+#    inHeight = frame.shape[0]
     
-        inWidth  = frame.shape[1]
-        inHeight = frame.shape[0]
+    
+    netInputSize = (368, 368)
+    inpBlob = cv2.dnn.blobFromImage(frame, 1.0 / 255, netInputSize, (0, 0, 0), swapRB=True, crop=False)
+    net.setInput(inpBlob)
+    
+    # Forward Pass
+    output = net.forward()
+    
+    # Display probability maps
+    #plt.figure(figsize=(20, 5))
+    #for i in range(nPoints):
+    #    probMap = output[0, i, :, :]
+    #    displayMap = cv2.resize(probMap, (inWidth, inHeight), cv2.INTER_LINEAR)
+    #    
+    #    plt.subplot(2, 8, i + 1)
+    #    plt.axis("off")
+    #    plt.imshow(displayMap, cmap="jet")
+    
+    
+    # X and Y Scale
+    scaleX = inWidth  / output.shape[3]
+    scaleY = inHeight / output.shape[2]
+    
+    # Empty list to store the detected keypoints
+    points = []
+    
+    # Treshold
+    threshold = 0.1
+    
+    
+    for i in range(nPoints):
+        # Obtain probability map
+        probMap = output[0, i, :, :]
+    
+        # Find global maxima of the probMap.
+        minVal, prob, minLoc, point = cv2.minMaxLoc(probMap)
+    
+        # Scale the point to fit on the original image
+        x = scaleX * point[0]
+        y = scaleY * point[1]
+        
+        point_matrix[(frm-1)*15+i,:] = ([frm, i+1, x, y])
         
         
-        netInputSize = (368, 368)
-        inpBlob = cv2.dnn.blobFromImage(frame, 1.0 / 255, netInputSize, (0, 0, 0), swapRB=True, crop=False)
-        net.setInput(inpBlob)
-        
-        # Forward Pass
-        output = net.forward()
-        
-        # Display probability maps
-        #plt.figure(figsize=(20, 5))
-        #for i in range(nPoints):
-        #    probMap = output[0, i, :, :]
-        #    displayMap = cv2.resize(probMap, (inWidth, inHeight), cv2.INTER_LINEAR)
-        #    
-        #    plt.subplot(2, 8, i + 1)
-        #    plt.axis("off")
-        #    plt.imshow(displayMap, cmap="jet")
-        
-        
-        # X and Y Scale
-        scaleX = inWidth  / output.shape[3]
-        scaleY = inHeight / output.shape[2]
-        
-        # Empty list to store the detected keypoints
-        points = []
-        
-        # Treshold
-        threshold = 0.1
-        
-        
-        for i in range(nPoints):
-            # Obtain probability map
-            probMap = output[0, i, :, :]
-        
-            # Find global maxima of the probMap.
-            minVal, prob, minLoc, point = cv2.minMaxLoc(probMap)
-        
-            # Scale the point to fit on the original image
-            x = scaleX * point[0]
-            y = scaleY * point[1]
+        if prob > threshold:
+            # Add the point to the list if the probability is greater than the threshold
+            points.append((int(x), int(y)))
+        else:
+            points.append(None)
             
-            point_matrix[(frm-1)*15+i,:] = ([frm, i+1, x, y])
             
-            
-            if prob > threshold:
-                # Add the point to the list if the probability is greater than the threshold
-                points.append((int(x), int(y)))
-            else:
-                points.append(None)
-                
-                
-        imPoints = frame.copy()
-        imSkeleton = frame.copy()
+    imPoints = frame.copy()
+    imSkeleton = frame.copy()
+    
+    # Draw points
+    for i, p in enumerate(points):
+        cv2.circle(imPoints, p, 8, (255, 255, 0), thickness=-1, lineType=cv2.FILLED)
+        cv2.putText(imPoints, "{}".format(i), p, cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, lineType=cv2.LINE_AA)
         
-        # Draw points
-        for i, p in enumerate(points):
-            cv2.circle(imPoints, p, 8, (255, 255, 0), thickness=-1, lineType=cv2.FILLED)
-            cv2.putText(imPoints, "{}".format(i), p, cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, lineType=cv2.LINE_AA)
-            
-        
-        # Draw skeleton
-        for pair in POSE_PAIRS:
-            partA = pair[0]
-            partB = pair[1]
-        
-            if points[partA] and points[partB]:
-                cv2.line(imSkeleton, points[partA], points[partB], (255, 255, 0), 2)
-                cv2.circle(imSkeleton, points[partA], 8, (255, 0, 0), thickness=-1, lineType=cv2.FILLED)
-        
-        # font
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        
-        # org
-        org = (20, 30)
-        org2 = (20, 40)
-        
-        # fontScale
-        fontScale = 0.25
-         
-        # Blue color in BGR
-        color = (0, 0, 255)
-        
-        # Line thickness of 2 px
-        thickness = 1
-         
-        # Using cv2.putText() method
-        imSkeleton = cv2.putText(imSkeleton, 'Frame: ' + str(frm) + ' / ' + str(length), org, font, fontScale, color, thickness, cv2.LINE_AA)
-        imSkeleton = cv2.putText(imSkeleton, 'FPS: ' + str(fps), org2, font, fontScale, color, thickness, cv2.LINE_AA)
-        
-        
-        imSkeleton_RGB = cv2.cvtColor(imSkeleton, cv2.COLOR_RGB2BGR)
+    
+    # Draw skeleton
+    for pair in POSE_PAIRS:
+        partA = pair[0]
+        partB = pair[1]
+    
+        if points[partA] and points[partB]:
+            cv2.line(imSkeleton, points[partA], points[partB], (255, 255, 0), 2)
+            cv2.circle(imSkeleton, points[partA], 8, (255, 0, 0), thickness=-1, lineType=cv2.FILLED)
+    
+    # font
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    
+    # org
+    org = (20, 30)
+    org2 = (20, 40)
+    
+    # fontScale
+    fontScale = 0.50
+     
+    # Blue color in BGR
+    color = (0, 0, 255)
+    
+    # Line thickness of 2 px
+    thickness = 1
+     
+    # Using cv2.putText() method
+    imSkeleton = cv2.putText(imSkeleton, 'Frame: ' + str(frm) + ' / ' + str(length), org, font, fontScale, color, thickness, cv2.LINE_AA)
+    imSkeleton = cv2.putText(imSkeleton, 'FPS: ' + str(fps), org2, font, fontScale, color, thickness, cv2.LINE_AA)
     
     
-        out_pose.write(imSkeleton_RGB)
+    imSkeleton_RGB = cv2.cvtColor(imSkeleton, cv2.COLOR_RGB2BGR)
+
+
+    out_pose.write(imSkeleton_RGB)
 
 out_pose.release()
 
