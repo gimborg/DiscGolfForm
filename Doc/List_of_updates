@@ -1,0 +1,10 @@
+Things that should be looked into
+
+
+Use raspvid or something more raw
+
+Include timestamp for each frame because oscillator on the cameraboard drift
+
+The saving of the camera file should be the quickest method to use in order to get the highest framerate
+
+Taken timestamps into accout when converting from h264 to mp4
